@@ -22,7 +22,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-const LISTEN_PORT: u8 = 8000;
+const LISTEN_PORT: u16 = 8000;
 
 lazy_static! {
     static ref OPENAPI_DOC: String = {
@@ -131,7 +131,7 @@ async fn main() -> Result<(), String> {
     // Start the server.
     let server = HttpServerStarter::new(
         &ConfigDropshot {
-            bind_address: "0.0.0.0:8000".parse().unwrap(),
+            bind_address: format!("0.0.0.0:{}", LISTEN_PORT).parse().unwrap(),
             request_body_max_bytes: 1024,
         },
         api,
