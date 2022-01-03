@@ -22,6 +22,8 @@ use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
+const LISTEN_PORT: u8 = 8000;
+
 lazy_static! {
     static ref OPENAPI_DOC: String = {
         let mut output = Cursor::new(Vec::new());
@@ -44,7 +46,7 @@ async fn index(_rqctx: Arc<RequestContext<ExampleContext>>) -> Result<Response<B
     Ok(Response::builder()
         .status(StatusCode::OK)
         .header(http::header::CONTENT_TYPE, "text/html")
-        .body(format!("testing {}", "abc").into())?)
+        .body("ok".into())?)
 }
 
 #[endpoint {
@@ -58,11 +60,48 @@ async fn docs(_rqctx: Arc<RequestContext<ExampleContext>>) -> Result<Response<Bo
         .body(format!("{}", *OPENAPI_DOC).into())?)
 }
 
+#[endpoint {
+    method = GET,
+    path = "/redoc",
+}]
+async fn redoc(_rqctx: Arc<RequestContext<ExampleContext>>) -> Result<Response<Body>, HttpError> {
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header(http::header::CONTENT_TYPE, "text/html")
+        .body(format!(r#"
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Redoc</title>
+    <!-- needed for adaptive design -->
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+
+    <!--
+    Redoc doesn't change outer page styles
+    -->
+    <style>
+      body {{
+        margin: 0;
+        padding: 0;
+      }}
+    </style>
+  </head>
+  <body>
+    <redoc spec-url='{}'></redoc>
+    <script src="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"> </script>
+  </body>
+</html>        
+        "#, "/openapi.json").into())?)
+}
+
 fn build_api_description() -> ApiDescription<ExampleContext> {
     let mut api = ApiDescription::new();
     // Register API functions -- see detailed example or ApiDescription docs.
     api.register(index).unwrap();
     api.register(docs).unwrap();
+    api.register(redoc).unwrap();
     api.register(example_api_get_counter).unwrap();
     api.register(example_api_put_counter).unwrap();
     return api;
