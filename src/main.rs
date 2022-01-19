@@ -33,7 +33,7 @@ lazy_static! {
             .description("forever in progress")
             .contact_name("sakti")
             .write(&mut output);
-        let result = from_utf8(&output.get_ref()).unwrap();
+        let result = from_utf8(output.get_ref()).unwrap();
         result.to_owned()
     };
 }
@@ -57,7 +57,7 @@ async fn docs(_rqctx: Arc<RequestContext<ExampleContext>>) -> Result<Response<Bo
     Ok(Response::builder()
         .status(StatusCode::OK)
         .header(http::header::CONTENT_TYPE, "application/json")
-        .body(format!("{}", *OPENAPI_DOC).into())?)
+        .body((*OPENAPI_DOC).to_string().into())?)
 }
 
 #[endpoint {
@@ -104,7 +104,7 @@ fn build_api_description() -> ApiDescription<ExampleContext> {
     api.register(redoc).unwrap();
     api.register(example_api_get_counter).unwrap();
     api.register(example_api_put_counter).unwrap();
-    return api;
+    api
 }
 
 #[tokio::main]
